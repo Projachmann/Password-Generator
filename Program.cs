@@ -11,46 +11,23 @@ namespace Password_Generator
     {
         static async Task Main(string[] args)
         {
-            Console.WriteLine("WELCOME TO PASSWORD GENERATOR");
-            Console.WriteLine("I need your api key for the generator(https://api-ninjas.com/profile)");
-            Console.Write("API Key: ");
-            string apiKey = Console.ReadLine();
-            Console.Clear();
-
-
             string baseUrl = "https://api.api-ninjas.com/v1/passwordgenerator";
             int passwordLength = 10;
             string url = $"{baseUrl}?length={passwordLength}";
 
             using (HttpClient client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
+                client.DefaultRequestHeaders.Add("X-Api-Key", "YOUR_API_KEY");
 
                 try
                 {
                     HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string responseBody = await response.Content.ReadAsStringAsync();
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    var passwordResponse = JsonConvert.DeserializeObject<PasswordResponse>(responseBody);
 
-                        var passwordResponse = JsonSerializer.Deserialize<PasswordResponse>(responseBody);
-
-                        if (passwordResponse != null)
-                        {
-                            Console.WriteLine($"Generated Password: {passwordResponse.RandomPassword}");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Failed to deserialize the response.");
-                        }
-                    }
-                    else
-                    {
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        Console.WriteLine($"Request failed with status code {response.StatusCode}: {response.ReasonPhrase}");
-                        Console.WriteLine($"Response Body: {responseBody}");
-                    }
+                    Console.WriteLine($"Generated Password: {passwordResponse.Password}");
                 }
                 catch (HttpRequestException e)
                 {
@@ -62,7 +39,7 @@ namespace Password_Generator
 
     public class PasswordResponse
     {
-        [JsonPropertyName("random_password")]
-        public string RandomPassword { get; set; }
+        [JsonProperty("password")]
+        public string Password { get; set; }
     }
 }
